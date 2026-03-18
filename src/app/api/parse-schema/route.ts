@@ -46,12 +46,40 @@ Rules:
 - Table and column names should be snake_case
 - Do not include any text outside the JSON object`;
 
-async function callClaude(input: string): Promise<string> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    throw new Error("Set ANTHROPIC_API_KEY in .env.local");
+const OPENROUTER_MODEL = "anthropic/claude-sonnet-4";
+
+async function callViaOpenRouter(input: string): Promise<string> {
+  const apiKey = process.env.OPENROUTER_API_KEY!;
+
+  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": "https://groundwork.dev",
+      "X-Title": "Groundwork",
+    },
+    body: JSON.stringify({
+      model: OPENROUTER_MODEL,
+      max_tokens: 2000,
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: input },
+      ],
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`OpenRouter error (${res.status}): ${err}`);
   }
 
+  const data = await res.json();
+  return data.choices[0].message.content;
+}
+
+async function callViaAnthropic(input: string): Promise<string> {
+  const apiKey = process.env.ANTHROPIC_API_KEY!;
   const client = new Anthropic({ apiKey });
   const response = await client.messages.create({
     model: "claude-sonnet-4-20250514",
@@ -65,6 +93,16 @@ async function callClaude(input: string): Promise<string> {
     throw new Error("Unexpected response format from Claude");
   }
   return textBlock.text;
+}
+
+async function callLLM(input: string): Promise<string> {
+  if (process.env.OPENROUTER_API_KEY) {
+    return callViaOpenRouter(input);
+  }
+  if (process.env.ANTHROPIC_API_KEY) {
+    return callViaAnthropic(input);
+  }
+  throw new Error("Set OPENROUTER_API_KEY or ANTHROPIC_API_KEY in .env.local");
 }
 
 export async function POST(request: NextRequest) {
@@ -86,12 +124,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Call Claude, retry once on invalid JSON
+    // Call LLM, retry once on invalid JSON
     let rawJson: string;
     try {
-      rawJson = await callClaude(input);
+      rawJson = await callLLM(input);
     } catch (err: unknown) {
-      if (err instanceof Error && err.message === "Set ANTHROPIC_API_KEY in .env.local") {
+      if (err instanceof Error && err.message.includes("Set OPENROUTER_API_KEY or ANTHROPIC_API_KEY")) {
         return NextResponse.json({ error: err.message }, { status: 500 });
       }
       return NextResponse.json(
@@ -106,7 +144,7 @@ export async function POST(request: NextRequest) {
     } catch {
       // Retry once with same prompt
       try {
-        rawJson = await callClaude(input);
+        rawJson = await callLLM(input);
         parsed = JSON.parse(rawJson);
       } catch {
         return NextResponse.json(
