@@ -95,14 +95,26 @@ async function callViaAnthropic(input: string): Promise<string> {
   return textBlock.text;
 }
 
+function extractJSON(text: string): string {
+  // Strip markdown code fences (```json ... ``` or ``` ... ```)
+  const fenceMatch = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+  if (fenceMatch) return fenceMatch[1].trim();
+  // Try to find raw JSON object
+  const braceMatch = text.match(/\{[\s\S]*\}/);
+  if (braceMatch) return braceMatch[0];
+  return text.trim();
+}
+
 async function callLLM(input: string): Promise<string> {
+  let raw: string;
   if (process.env.OPENROUTER_API_KEY) {
-    return callViaOpenRouter(input);
+    raw = await callViaOpenRouter(input);
+  } else if (process.env.ANTHROPIC_API_KEY) {
+    raw = await callViaAnthropic(input);
+  } else {
+    throw new Error("Set OPENROUTER_API_KEY or ANTHROPIC_API_KEY in .env.local");
   }
-  if (process.env.ANTHROPIC_API_KEY) {
-    return callViaAnthropic(input);
-  }
-  throw new Error("Set OPENROUTER_API_KEY or ANTHROPIC_API_KEY in .env.local");
+  return extractJSON(raw);
 }
 
 export async function POST(request: NextRequest) {
