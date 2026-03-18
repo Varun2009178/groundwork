@@ -76,9 +76,9 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen">
+    <div className="min-h-screen flex flex-col bg-gradient-subtle">
       <StepSidebar currentStep={currentStep} />
-      <main className="flex-1 px-5 py-6 md:px-12 md:py-10 max-w-3xl">
+      <main className="flex-1 px-6 py-10 md:py-16">
         {currentStep === 1 && (
           <SchemaInput
             value={userInput}

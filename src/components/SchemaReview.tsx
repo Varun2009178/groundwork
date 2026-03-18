@@ -10,25 +10,45 @@ interface SchemaReviewProps {
 
 export default function SchemaReview({ schema, onEdit, onGenerate, isLoading, error }: SchemaReviewProps) {
   return (
-    <div>
-      <div className="flex items-center justify-between mb-1.5">
-        <h2 className="text-xl font-semibold tracking-tight"
-          style={{ color: "var(--text-primary)" }}>
-          {schema.name}
-        </h2>
+    <div className="w-full max-w-4xl mx-auto">
+      <div className="flex items-start justify-between mb-2">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight mb-1"
+            style={{ color: "var(--text-primary)" }}>
+            {schema.name}
+          </h2>
+          <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+            {schema.description}
+          </p>
+        </div>
         <button
           onClick={onEdit}
-          className="text-sm hover:underline"
-          style={{ color: "var(--text-secondary)" }}
+          className="text-sm font-medium px-4 py-2 rounded-lg transition-all duration-200 shrink-0 cursor-pointer"
+          style={{
+            color: "var(--text-secondary)",
+            border: "1px solid var(--border-color)",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)";
+            e.currentTarget.style.color = "var(--text-primary)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
+            e.currentTarget.style.color = "var(--text-secondary)";
+          }}
         >
           ← Edit
         </button>
       </div>
-      <p className="text-sm mb-6" style={{ color: "var(--text-secondary)" }}>
-        {schema.description}
-      </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <div className="mt-6 mb-4">
+        <p className="text-xs font-medium uppercase tracking-wider"
+          style={{ color: "var(--text-muted)" }}>
+          {schema.tables.length} {schema.tables.length === 1 ? "table" : "tables"} &middot; {schema.relationships.length} {schema.relationships.length === 1 ? "relationship" : "relationships"}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         {schema.tables.map((table) => {
           const tableRels = schema.relationships.filter(
             (r) => r.from === table.name || r.to === table.name
@@ -36,50 +56,58 @@ export default function SchemaReview({ schema, onEdit, onGenerate, isLoading, er
           return (
             <div
               key={table.name}
-              className="rounded-lg p-4"
-              style={{ background: "var(--bg-input)", border: "1px solid var(--border-color)" }}
+              className="rounded-xl p-5 transition-all duration-200"
+              style={{
+                background: "var(--bg-card)",
+                border: "1px solid var(--border-color)",
+              }}
             >
-              <h3 className="text-sm font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
-                {table.name}
-              </h3>
-              <p className="text-xs mb-3" style={{ color: "var(--text-secondary)" }}>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 rounded-full" style={{ background: "rgba(120, 119, 198, 0.6)" }} />
+                <h3 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+                  {table.name}
+                </h3>
+              </div>
+              <p className="text-xs mb-4" style={{ color: "var(--text-secondary)" }}>
                 {table.description}
               </p>
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-2">
                 {table.columns.map((col) => (
-                  <div key={col.name} className="flex items-center gap-2 text-xs">
-                    <span style={{ color: "var(--text-primary)" }}>{col.name}</span>
-                    <span
-                      className="px-1.5 py-0.5 rounded text-[10px] font-medium"
-                      style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-secondary)" }}
-                    >
-                      {col.type}
-                    </span>
-                    {col.primaryKey && (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-medium"
-                        style={{ background: "rgba(255,200,50,0.1)", color: "rgba(255,200,50,0.7)" }}>
-                        PK
+                  <div key={col.name} className="flex items-center justify-between text-xs">
+                    <span className="font-mono" style={{ color: "var(--text-primary)" }}>{col.name}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className="px-2 py-0.5 rounded-md text-[10px] font-medium"
+                        style={{ background: "var(--accent)", color: "var(--text-secondary)" }}
+                      >
+                        {col.type}
                       </span>
-                    )}
-                    {col.references && (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-medium"
-                        style={{ background: "rgba(100,180,255,0.1)", color: "rgba(100,180,255,0.7)" }}>
-                        FK → {col.references.table}
-                      </span>
-                    )}
-                    {col.unique && (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-medium"
-                        style={{ background: "rgba(150,255,150,0.1)", color: "rgba(150,255,150,0.7)" }}>
-                        unique
-                      </span>
-                    )}
+                      {col.primaryKey && (
+                        <span className="px-1.5 py-0.5 rounded-md text-[10px] font-medium"
+                          style={{ background: "rgba(250, 204, 21, 0.1)", color: "rgba(250, 204, 21, 0.7)" }}>
+                          PK
+                        </span>
+                      )}
+                      {col.references && (
+                        <span className="px-1.5 py-0.5 rounded-md text-[10px] font-medium"
+                          style={{ background: "rgba(96, 165, 250, 0.1)", color: "rgba(96, 165, 250, 0.7)" }}>
+                          FK
+                        </span>
+                      )}
+                      {col.unique && (
+                        <span className="px-1.5 py-0.5 rounded-md text-[10px] font-medium"
+                          style={{ background: "rgba(74, 222, 128, 0.1)", color: "rgba(74, 222, 128, 0.7)" }}>
+                          UQ
+                        </span>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
               {tableRels.length > 0 && (
-                <div className="mt-3 pt-3" style={{ borderTop: "1px solid var(--border-subtle)" }}>
+                <div className="mt-4 pt-3" style={{ borderTop: "1px solid var(--border-subtle)" }}>
                   {tableRels.map((rel, i) => (
-                    <p key={i} className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                    <p key={i} className="text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
                       {rel.description}
                     </p>
                   ))}
@@ -91,14 +119,14 @@ export default function SchemaReview({ schema, onEdit, onGenerate, isLoading, er
       </div>
 
       {error && (
-        <p className="mb-3 text-sm text-red-400">{error}</p>
+        <p className="mb-4 text-sm text-red-400">{error}</p>
       )}
 
       <div className="flex justify-end">
         <button
           onClick={onGenerate}
           disabled={isLoading}
-          className="px-6 py-2.5 rounded-[7px] text-sm font-medium disabled:opacity-40 transition-opacity flex items-center gap-2"
+          className="px-8 py-3 rounded-lg text-sm font-semibold disabled:opacity-30 transition-all duration-200 flex items-center gap-2.5 cursor-pointer disabled:cursor-not-allowed"
           style={{ background: "var(--button-bg)", color: "var(--button-text)" }}
         >
           {isLoading ? (
