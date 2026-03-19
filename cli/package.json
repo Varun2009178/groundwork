@@ -1,6 +1,6 @@
 {
   "name": "groundwork-cli",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Persistent AI context files for your database schema. Drop it into your AI coding sessions and never explain your schema again.",
   "main": "./dist/index.js",
   "bin": {
