@@ -1,0 +1,34 @@
+{
+  "name": "groundwork-cli",
+  "version": "0.1.0",
+  "description": "Generate AI context files from plain English database schemas",
+  "bin": {
+    "groundwork": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "ai",
+    "database",
+    "schema",
+    "context",
+    "cursor",
+    "copilot",
+    "claude"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.80.0",
+    "commander": "^13.1.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "typescript": "^5"
+  }
+}

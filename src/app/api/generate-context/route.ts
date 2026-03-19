@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateContext } from "@/lib/context-generator";
+import { trimForCursor, trimForCopilot } from "@/lib/context-trimmer";
 import { Schema } from "@/lib/types";
 
 export async function POST(request: NextRequest) {
@@ -15,7 +16,10 @@ export async function POST(request: NextRequest) {
     }
 
     const content = generateContext(schema);
-    return NextResponse.json({ content });
+    const cursor = trimForCursor(content);
+    const copilot = trimForCopilot(content);
+
+    return NextResponse.json({ content, cursor, copilot });
   } catch {
     return NextResponse.json(
       { error: "Failed to generate context file." },

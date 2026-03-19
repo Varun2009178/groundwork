@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 interface StepSidebarProps {
   currentStep: 1 | 2 | 3;
 }
@@ -13,16 +15,16 @@ export default function StepSidebar({ currentStep }: StepSidebarProps) {
     <div className="w-full border-b px-6 py-4"
       style={{ background: "var(--bg-secondary)", borderColor: "var(--border-subtle)" }}>
       <div className="max-w-5xl mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-3">
+        <Link href="/" className="flex items-center gap-3 transition-opacity duration-200 hover:opacity-80">
           <span className="text-[15px] font-semibold tracking-tight"
             style={{ color: "var(--text-primary)" }}>
             Groundwork
           </span>
           <span className="text-xs px-2 py-0.5 rounded-full"
-            style={{ background: "var(--accent)", color: "var(--text-secondary)" }}>
+            style={{ background: "var(--accent-subtle)", color: "var(--text-secondary)" }}>
             beta
           </span>
-        </div>
+        </Link>
         <nav className="flex items-center gap-1">
           {steps.map((step, i) => {
             const isActive = currentStep === step.number;
@@ -30,7 +32,7 @@ export default function StepSidebar({ currentStep }: StepSidebarProps) {
             return (
               <div key={step.number} className="flex items-center">
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-full transition-all-200"
-                  style={isActive ? { background: "var(--accent)" } : {}}>
+                  style={isActive ? { background: "var(--accent-subtle)" } : {}}>
                   <span
                     className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold"
                     style={

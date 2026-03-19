@@ -63,7 +63,7 @@ export default function SchemaReview({ schema, onEdit, onGenerate, isLoading, er
               }}
             >
               <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 rounded-full" style={{ background: "rgba(120, 119, 198, 0.6)" }} />
+                <div className="w-2 h-2 rounded-full" style={{ background: "rgba(255, 255, 255, 0.4)" }} />
                 <h3 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
                   {table.name}
                 </h3>
@@ -78,7 +78,7 @@ export default function SchemaReview({ schema, onEdit, onGenerate, isLoading, er
                     <div className="flex items-center gap-1.5">
                       <span
                         className="px-2 py-0.5 rounded-md text-[10px] font-medium"
-                        style={{ background: "var(--accent)", color: "var(--text-secondary)" }}
+                        style={{ background: "var(--accent-subtle)", color: "var(--text-secondary)" }}
                       >
                         {col.type}
                       </span>
