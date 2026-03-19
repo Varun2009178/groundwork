@@ -38,6 +38,12 @@ yarn-error.log*
 # superpowers
 .superpowers/
 
+# ai tool configs
+.claude/
+CLAUDE.md
+AGENTS.md
+docs/superpowers/
+
 # vercel
 .vercel
 
