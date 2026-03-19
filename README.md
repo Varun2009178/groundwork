@@ -5,7 +5,7 @@
 [![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![npm](https://img.shields.io/npm/v/groundwork-cli)](https://www.npmjs.com/package/groundwork-cli)
 
-> Describe your database in plain English. Get a context file with correct JOINs, constraints, and edge cases your AI would miss. One command. Done.
+> Persistent AI context files for your database schema. Drop it into your AI coding sessions and never explain your schema again.
 
 ---
 
@@ -20,7 +20,7 @@ You could paste your schema every time. But you'd forget the nullable columns, t
 ## Quick Start
 
 ```bash
-npx groundwork init
+npx groundwork-cli init
 ```
 
 That's it. Describe your schema, get a `GROUNDWORK.md`.
@@ -41,7 +41,7 @@ groundwork check         # Validate your schema for common issues
 Interactive schema input. Describe your database in plain English, press Enter twice, and get a `GROUNDWORK.md` in your current directory.
 
 ```bash
-$ npx groundwork init
+$ npx groundwork-cli init
 
 Describe your database schema in plain English.
 (Press Enter twice to submit)
@@ -59,7 +59,7 @@ Describe your database schema in plain English.
 Validates your `GROUNDWORK.md` for issues that will trip up AI:
 
 ```bash
-$ npx groundwork check
+$ npx groundwork-cli check
 
 Checking GROUNDWORK.md...
 
@@ -155,7 +155,7 @@ Smart trimming progressively removes sections (patterns → mistakes → example
 ```bash
 # CLI
 export ANTHROPIC_API_KEY=your-key
-npx groundwork init
+npx groundwork-cli init
 
 # Web app (development)
 git clone https://github.com/Varun2009178/groundwork.git

@@ -1,16 +1,19 @@
 {
   "name": "groundwork-cli",
-  "version": "0.1.0",
-  "description": "Generate AI context files from plain English database schemas",
+  "version": "0.1.1",
+  "description": "Persistent AI context files for your database schema. Drop it into your AI coding sessions and never explain your schema again.",
+  "main": "./dist/index.js",
   "bin": {
-    "groundwork": "./dist/index.js"
+    "groundwork": "dist/index.js"
   },
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "prepublishOnly": "npm run build"
   },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE"
   ],
   "keywords": [
     "ai",
@@ -19,9 +22,27 @@
     "context",
     "cursor",
     "copilot",
-    "claude"
+    "claude",
+    "groundwork",
+    "llm",
+    "sql",
+    "orm",
+    "developer-tools"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Varun2009178/groundwork.git",
+    "directory": "cli"
+  },
+  "homepage": "https://github.com/Varun2009178/groundwork#readme",
+  "bugs": {
+    "url": "https://github.com/Varun2009178/groundwork/issues"
+  },
+  "author": "Varun Nukala",
   "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
     "commander": "^13.1.0",

@@ -162,9 +162,9 @@ export default function LandingPage() {
               >
                 <span className="text-xl" style={{ color: "var(--text-muted)" }}>$</span>
                 <span className="text-xl md:text-2xl font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>
-                  npx groundwork init
+                  npx groundwork-cli init
                 </span>
-                <CopyButton text="npx groundwork init" />
+                <CopyButton text="npx groundwork-cli init" />
               </div>
               <Link
                 href="/app"
@@ -338,7 +338,7 @@ export default function LandingPage() {
                   <span className="text-xs font-medium ml-2" style={{ color: "var(--text-secondary)" }}>Terminal</span>
                 </div>
                 <CopyButton
-                  text="npx groundwork init"
+                  text="npx groundwork-cli init"
                   label
                   className="text-xs px-2.5 py-1 rounded-md transition-colors duration-150 cursor-pointer inline-flex items-center gap-1.5"
                   style={{ color: "var(--text-muted)", border: "1px solid var(--border-color)" }}
@@ -349,7 +349,7 @@ export default function LandingPage() {
                 style={{ background: "var(--bg-input)", color: "var(--text-primary)" }}
               >
                 <code>
-                  <span style={{ color: "var(--text-muted)" }}>$</span> <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>npx groundwork init</span>{"\n\n"}
+                  <span style={{ color: "var(--text-muted)" }}>$</span> <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>npx groundwork-cli init</span>{"\n\n"}
                   <span style={{ color: "var(--text-secondary)" }}>Describe your database schema in plain English.</span>{"\n"}
                   <span style={{ color: "var(--text-muted)" }}>(Press Enter twice when done)</span>{"\n\n"}
                   <span style={{ color: "var(--text-muted)" }}>&gt;</span> I have a users table with id, name, email.{"\n"}
@@ -380,7 +380,7 @@ export default function LandingPage() {
             >
               <span className="text-xl" style={{ color: "var(--text-muted)" }}>$</span>
               <span className="text-xl md:text-2xl font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>
-                npx groundwork init
+                npx groundwork-cli init
               </span>
             </div>
             <div className="flex items-center justify-center gap-5">

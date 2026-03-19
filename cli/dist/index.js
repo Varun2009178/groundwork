@@ -43,7 +43,36 @@ const llm_1 = require("./llm");
 const validator_1 = require("./validator");
 const generator_1 = require("./generator");
 const check_1 = require("./check");
-const VERSION = "0.1.0";
+const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "package.json"), "utf-8"));
+const VERSION = pkg.version;
+// Load .env.local / .env from the current directory (so users don't need to export manually)
+function loadEnvFile() {
+    for (const name of [".env.local", ".env"]) {
+        const filePath = path.resolve(process.cwd(), name);
+        if (!fs.existsSync(filePath))
+            continue;
+        const content = fs.readFileSync(filePath, "utf-8");
+        for (const line of content.split("\n")) {
+            const trimmed = line.trim();
+            if (!trimmed || trimmed.startsWith("#"))
+                continue;
+            const eqIndex = trimmed.indexOf("=");
+            if (eqIndex === -1)
+                continue;
+            const key = trimmed.slice(0, eqIndex).trim();
+            let value = trimmed.slice(eqIndex + 1).trim();
+            // Strip surrounding quotes
+            if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+                value = value.slice(1, -1);
+            }
+            // Don't overwrite existing env vars
+            if (!process.env[key]) {
+                process.env[key] = value;
+            }
+        }
+    }
+}
+loadEnvFile();
 function createSpinner(text) {
     const frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
     let i = 0;
