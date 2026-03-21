@@ -162,9 +162,9 @@ export default function LandingPage() {
               >
                 <span className="text-xl" style={{ color: "var(--text-muted)" }}>$</span>
                 <span className="text-xl md:text-2xl font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>
-                  npx groundwork-cli init
+                  npx groundwork-cli
                 </span>
-                <CopyButton text="npx groundwork-cli init" />
+                <CopyButton text="npx groundwork-cli" />
               </div>
               <Link
                 href="/app"
@@ -338,7 +338,7 @@ export default function LandingPage() {
                   <span className="text-xs font-medium ml-2" style={{ color: "var(--text-secondary)" }}>Terminal</span>
                 </div>
                 <CopyButton
-                  text="npx groundwork-cli init"
+                  text="npx groundwork-cli"
                   label
                   className="text-xs px-2.5 py-1 rounded-md transition-colors duration-150 cursor-pointer inline-flex items-center gap-1.5"
                   style={{ color: "var(--text-muted)", border: "1px solid var(--border-color)" }}
@@ -349,7 +349,7 @@ export default function LandingPage() {
                 style={{ background: "var(--bg-input)", color: "var(--text-primary)" }}
               >
                 <code>
-                  <span style={{ color: "var(--text-muted)" }}>$</span> <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>npx groundwork-cli init</span>{"\n\n"}
+                  <span style={{ color: "var(--text-muted)" }}>$</span> <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>npx groundwork-cli</span>{"\n\n"}
                   <span style={{ color: "var(--text-secondary)" }}>Describe your database schema in plain English.</span>{"\n"}
                   <span style={{ color: "var(--text-muted)" }}>(Press Enter twice when done)</span>{"\n\n"}
                   <span style={{ color: "var(--text-muted)" }}>&gt;</span> I have a users table with id, name, email.{"\n"}
@@ -380,7 +380,7 @@ export default function LandingPage() {
             >
               <span className="text-xl" style={{ color: "var(--text-muted)" }}>$</span>
               <span className="text-xl md:text-2xl font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>
-                npx groundwork-cli init
+                npx groundwork-cli
               </span>
             </div>
             <div className="flex items-center justify-center gap-5">
@@ -404,6 +404,36 @@ export default function LandingPage() {
                 GitHub
               </a>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Coming Soon */}
+      <section className="py-16 px-6 relative z-10">
+        <div className="max-w-3xl mx-auto text-center">
+          <p className="text-xs font-medium uppercase tracking-widest mb-8" style={{ color: "var(--text-muted)" }}>
+            Coming Soon
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {[
+              { title: "groundwork check", desc: "Validate your schema for common issues" },
+              { title: "Import from SQL", desc: "Paste DDL or Prisma schema, get GROUNDWORK.md" },
+              { title: "Schema History", desc: "Track how your schema evolves over time" },
+              { title: "Team Sharing", desc: "Share schemas across your team" },
+            ].map((item) => (
+              <div
+                key={item.title}
+                className="rounded-xl p-5 text-left"
+                style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}
+              >
+                <p className="text-sm font-semibold mb-1" style={{ color: "var(--text-secondary)" }}>
+                  {item.title}
+                </p>
+                <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                  {item.desc}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
