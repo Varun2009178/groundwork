@@ -1,7 +1,7 @@
 # Groundwork Launch-Ready Design Spec
 
 **Date:** 2026-03-20
-**Status:** Draft
+**Status:** Approved
 **Goal:** Make Groundwork demo-ready for public launch — thousands of users, forkable, polished to paid-product quality. Fully free and open-source; revenue is adoption and credibility.
 
 ---
@@ -23,11 +23,13 @@ Six workstreams, no new features beyond what's listed:
 
 ### 1a. Relationship Map Direction
 
-**Problem:** Both `cli/src/generator.ts:53` and `src/lib/context-generator.ts` render relationships as `${r.from} 1──* ${r.to}`. The LLM returns `from` as the FK-holding table (the "many" side), so `posts 1──* users` reads as "one post has many users" — semantically backwards.
+**Problem:** Both `cli/src/generator.ts` (around lines 53 and 98) and `src/lib/context-generator.ts` render relationships as `${r.from} 1──* ${r.to}`. The LLM returns `from` as the FK-holding table (the "many" side), so `posts 1──* users` reads as "one post has many users" — semantically backwards.
 
-**Fix:** For `one-to-many` relationships, swap `from` and `to` in:
+**Fix:** For `one-to-many` relationships, swap `from` and `to` for display in:
 - The ASCII relationship map: `users 1──* posts (user_id)` instead of `posts 1──* users (user_id)`
 - The text relationship line: `**users → posts**: one-to-many via posts.user_id` instead of `**posts → users**: one-to-many`
+
+**Important:** When swapping `from`/`to` for display, the `via` clause must still reference the original FK-holding table. Use the original `from` value (not the swapped one) for the `via` reference: `via ${originalFrom}.${r.foreignKey}`.
 
 For `many-to-many` and `one-to-one`, order doesn't matter semantically — leave as-is.
 
@@ -79,16 +81,17 @@ Client POST /api/parse-schema { input, apiKey? }
 
 ### Implementation
 
-- **Store:** Vercel KV (Redis). Free tier: 30K requests/month, 256MB.
+- **Store:** Vercel KV (Redis) via `@vercel/redis`. Free tier: 30K requests/month, 256MB.
 - **Key format:** `ratelimit:parse:{ip}` with value = integer count
-- **TTL:** Keys expire at midnight UTC (calculate seconds remaining in day)
-- **Limit:** 10 generations per IP per day
+- **IP extraction:** `request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()` with fallback to `'unknown'`. On Vercel, `x-forwarded-for` is always set.
+- **TTL:** 86400 seconds (24 hours), set on first request. Counter resets 24 hours after first use. This is simpler than midnight-UTC resets and more predictable for users.
+- **Limit:** 10 generations per IP per 24-hour window
 - **Fail-open:** If KV is unreachable (try-catch around KV calls), allow the request using the server key. Availability > protection.
-- **Server key:** `OPENROUTER_API_KEY` or `ANTHROPIC_API_KEY` set in Vercel environment variables
+- **Server key:** The existing `callLLM` function in the route already falls through `OPENROUTER_API_KEY || ANTHROPIC_API_KEY || OPENAI_API_KEY || GEMINI_API_KEY` when no client key is provided. No new key-routing logic needed — the rate limit check is the only new logic. If no `apiKey` in the request body, check rate limit, then let the existing server-side fallback handle the LLM call.
 
 ### Dependencies
 
-- `@vercel/kv` package added to root `package.json`
+- `@vercel/redis` package added to root `package.json` (note: `@vercel/kv` is deprecated, `@vercel/redis` is the current replacement with the same backing store)
 
 ### File changed
 
@@ -138,7 +141,7 @@ export const metadata: Metadata = {
     title: "Groundwork — Give your AI the full picture",
     description: "Turn plain English into structured database context files that AI tools actually understand.",
     type: "website",
-    image: "/og-image.png",
+    images: ["/og-image.png"],
   },
   twitter: {
     card: "summary_large_image",
@@ -163,12 +166,14 @@ Style: muted, teaser-style cards. Not prominent — just signals the project is 
 
 ### 4c. CTA Polish
 
+**Depends on sections 1b and 1c being completed first.** Implement in order: 1b → 1c → 4c.
+
 - Make the "Try it now" button and `npx groundwork` command more visually prominent on the landing page
 - Update CLI command references from `npx groundwork-cli init` to `npx groundwork` (or `npx groundwork-cli` if rename not possible)
 
 ### 4d. Favicon
 
-Ensure favicon is set in `layout.tsx`. The project has assets in `public/` — verify one exists or add a simple one.
+No favicon currently exists in `public/` (only default Next.js SVGs). Add `public/favicon.ico` (or `src/app/icon.png` using Next.js App Router convention). Ensure `layout.tsx` references it via the metadata `icons` property.
 
 ---
 
@@ -176,7 +181,7 @@ Ensure favicon is set in `layout.tsx`. The project has assets in `public/` — v
 
 ### 5a. `.env.example`
 
-Add to repo root:
+Update the existing `.env.example` in the repo root to include KV variables and all four provider keys:
 
 ```env
 # Server-side API key for web app free tier (pick one)
@@ -218,9 +223,11 @@ jobs:
 
 No test step — no tests exist yet. CI ensures lint + build pass on every push/PR.
 
+**Important:** Ensure `package-lock.json` (root) and `cli/package-lock.json` are committed to the repo. `npm ci` requires lockfiles.
+
 ### 5c. README Updates
 
-- Fix Next.js version: "14" → "16"
+- Verify Next.js version is listed as 16 throughout README (already correct in tech stack table, check for any other references)
 - Update CLI invocation to `npx groundwork` (or `npx groundwork-cli`)
 - Add badges at top: CI status, npm version, MIT license
 - Clean up any stale references
@@ -283,8 +290,8 @@ These are explicitly NOT included in this work:
 | `src/app/page.tsx` | Coming Soon section, CTA polish |
 | `src/app/app/error.tsx` | New: error boundary |
 | `src/app/not-found.tsx` | New: 404 page |
-| `.env.example` | New: environment variable template |
+| `.env.example` | Updated: add KV variables and all provider keys |
 | `.github/workflows/ci.yml` | New: CI pipeline |
 | `README.md` | Version fix, badges, CLI invocation update |
 | `public/og-image.png` | New: OG image for social sharing |
-| `package.json` | Add @vercel/kv dependency |
+| `package.json` | Add @vercel/redis dependency |
