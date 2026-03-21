@@ -2,8 +2,9 @@
 
 **Your AI is guessing your database. Groundwork makes it know.**
 
-[![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![CI](https://github.com/Varun2009178/groundwork/actions/workflows/ci.yml/badge.svg)](https://github.com/Varun2009178/groundwork/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/groundwork-cli)](https://www.npmjs.com/package/groundwork-cli)
+[![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 > Persistent AI context files for your database schema. Drop it into your AI coding sessions and never explain your schema again.
 
@@ -20,7 +21,7 @@ You could paste your schema every time. But you'd forget the nullable columns, t
 ## Quick Start
 
 ```bash
-npx groundwork-cli init
+npx groundwork-cli
 ```
 
 That's it. Describe your schema, get a `GROUNDWORK.md`.
@@ -41,7 +42,7 @@ groundwork check         # Validate your schema for common issues
 Interactive schema input. Describe your database in plain English, press Enter twice, and get a `GROUNDWORK.md` in your current directory.
 
 ```bash
-$ npx groundwork-cli init
+$ npx groundwork-cli
 
 Describe your database schema in plain English.
 (Press Enter twice to submit)
@@ -155,7 +156,7 @@ Smart trimming progressively removes sections (patterns → mistakes → example
 ```bash
 # CLI
 export ANTHROPIC_API_KEY=your-key
-npx groundwork-cli init
+npx groundwork-cli
 
 # Web app (development)
 git clone https://github.com/Varun2009178/groundwork.git
