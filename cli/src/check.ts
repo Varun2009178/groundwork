@@ -175,6 +175,14 @@ export function validateSchema(schema: Schema): CheckResult[] {
 export function checkFile(filePath: string): { schema: Schema | null; results: CheckResult[] } {
   const absPath = path.resolve(process.cwd(), filePath);
 
+  // Prevent path traversal — file must be within the working directory
+  if (!absPath.startsWith(process.cwd() + path.sep) && absPath !== process.cwd()) {
+    return {
+      schema: null,
+      results: [{ status: "fail", message: "File path must be within the current directory." }],
+    };
+  }
+
   if (!fs.existsSync(absPath)) {
     return {
       schema: null,

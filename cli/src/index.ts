@@ -102,6 +102,12 @@ async function initCommand(options: { output?: string }) {
   const outputFile = options.output || "GROUNDWORK.md";
   const outputPath = path.resolve(process.cwd(), outputFile);
 
+  // Prevent path traversal — output must stay within the working directory
+  if (!outputPath.startsWith(process.cwd() + path.sep) && outputPath !== process.cwd()) {
+    console.error("\n✗ Output path must be within the current directory.\n");
+    process.exit(1);
+  }
+
   // Check if file already exists
   if (fs.existsSync(outputPath)) {
     const answer = await prompt(

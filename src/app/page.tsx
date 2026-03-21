@@ -11,9 +11,13 @@ function CopyButton({ text, label, className, style }: { text: string; label?: b
   return (
     <button
       onClick={() => {
-        navigator.clipboard.writeText(text);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+        try {
+          navigator.clipboard.writeText(text);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        } catch {
+          // Clipboard API unavailable (non-HTTPS or restricted context)
+        }
       }}
       className={className || "ml-1 p-1.5 rounded-lg transition-colors duration-150 cursor-pointer"}
       style={style || { color: "var(--text-muted)" }}

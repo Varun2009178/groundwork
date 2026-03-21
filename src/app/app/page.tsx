@@ -18,18 +18,18 @@ export default function AppPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Persist API key in localStorage
+  // Persist API key in sessionStorage
   useEffect(() => {
-    const saved = localStorage.getItem("groundwork_api_key");
+    const saved = sessionStorage.getItem("groundwork_api_key");
     if (saved) setApiKey(saved);
   }, []);
 
   const handleApiKeyChange = (key: string) => {
     setApiKey(key);
     if (key) {
-      localStorage.setItem("groundwork_api_key", key);
+      sessionStorage.setItem("groundwork_api_key", key);
     } else {
-      localStorage.removeItem("groundwork_api_key");
+      sessionStorage.removeItem("groundwork_api_key");
     }
   };
 
