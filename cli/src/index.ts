@@ -5,7 +5,7 @@ import * as readline from "readline";
 import * as fs from "fs";
 import * as path from "path";
 import * as crypto from "crypto";
-import { callLLM } from "./llm";
+import { callLLM, getKeyInfo } from "./llm";
 import { claudeResponseSchema } from "./validator";
 import { generateContext } from "./generator";
 import { checkFile, formatResults } from "./check";
@@ -114,15 +114,21 @@ async function initCommand(options: { output?: string }) {
   }
 
   // Check for API key
-  if (!process.env.OPENROUTER_API_KEY && !process.env.ANTHROPIC_API_KEY) {
+  const keyInfo = getKeyInfo();
+  if (!keyInfo) {
     console.error(
-      "\n✗ Missing API key. Set OPENROUTER_API_KEY or ANTHROPIC_API_KEY in your environment.\n"
+      "\n✗ Missing API key. Set one of these in your environment or .env.local:\n"
     );
     console.error("  export OPENROUTER_API_KEY=your-key-here");
-    console.error("  # or");
-    console.error("  export ANTHROPIC_API_KEY=your-key-here\n");
+    console.error("  export ANTHROPIC_API_KEY=your-key-here");
+    console.error("  export OPENAI_API_KEY=your-key-here");
+    console.error("  export GEMINI_API_KEY=your-key-here\n");
     process.exit(1);
   }
+
+  // Show which key will be used (masked) and get confirmation
+  console.log(`\n  Using ${keyInfo.provider} key: ${keyInfo.masked}`);
+  console.log("  Your key is sent directly to the provider over HTTPS. It is never stored or logged.\n");
 
   const input = await readMultilineInput();
 
@@ -181,6 +187,14 @@ async function initCommand(options: { output?: string }) {
 
   console.log(`\n✓ Written to ${outputFile}`);
   console.log(`  ${content.split("\n").length} lines, ${content.length.toLocaleString()} chars\n`);
+
+  // Show auto-setup instructions
+  console.log("  To make your AI read it automatically, add one line:\n");
+  console.log("  Claude Code  → CLAUDE.md                         @GROUNDWORK.md");
+  console.log("  Cursor       → .cursorrules                      Read and follow GROUNDWORK.md for all database work.");
+  console.log("  Windsurf     → .windsurfrules                    Read and follow GROUNDWORK.md for all database work.");
+  console.log("  Copilot      → .github/copilot-instructions.md   Read and follow GROUNDWORK.md for all database work.");
+  console.log("");
 }
 
 const program = new Command();

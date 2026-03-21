@@ -4,24 +4,26 @@ import { useState } from "react";
 
 type ExportTab = "full" | "cursor" | "copilot";
 
-const TAB_CONFIG: Record<ExportTab, { label: string; filename: string; path: string; instructions: string }> = {
+const TAB_CONFIG: Record<ExportTab, { label: string; filename: string; path: string; instructions: string; autoSetup?: string }> = {
   full: {
     label: "Full",
     filename: "GROUNDWORK.md",
     path: "your-project/GROUNDWORK.md",
-    instructions: "Works with any AI tool. Drop it in your project root and reference it in your prompts.",
+    instructions: "Drop it in your project root. AI tools will read it automatically once you add the one-line hook below.",
   },
   cursor: {
     label: "Cursor",
     filename: ".cursorrules",
     path: "your-project/.cursorrules",
     instructions: "Cursor automatically reads .cursorrules from your project root. No extra setup needed.",
+    autoSetup: "Cursor reads this file automatically — zero config.",
   },
   copilot: {
     label: "Copilot",
     filename: "copilot-instructions.md",
     path: "your-project/.github/copilot-instructions.md",
     instructions: "Copilot reads from .github/copilot-instructions.md. Create the .github folder if it doesn't exist.",
+    autoSetup: "Copilot reads this file automatically — zero config.",
   },
 };
 
@@ -375,30 +377,64 @@ export default function ContextExport({
         </div>
 
         {activeTab === "full" && (
-          <div className="flex items-start gap-3">
-            <div className="w-5 h-5 rounded flex items-center justify-center shrink-0 mt-0.5" style={{ background: "rgba(96, 165, 250, 0.1)" }}>
-              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="rgba(96, 165, 250, 0.7)" strokeWidth="2">
-                <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z" />
-                <polyline points="13 2 13 9 20 9" />
+          <>
+            <p className="text-xs font-semibold uppercase tracking-widest mb-2 mt-4" style={{ color: "var(--text-muted)" }}>
+              Auto-load hooks
+            </p>
+            <p className="text-xs mb-3" style={{ color: "var(--text-secondary)" }}>
+              Add one line to your AI tool&apos;s config file so it reads GROUNDWORK.md automatically every session:
+            </p>
+            <div className="flex flex-col gap-2">
+              {[
+                { tool: "Claude Code", file: "CLAUDE.md", line: "@GROUNDWORK.md" },
+                { tool: "Cursor", file: ".cursorrules", line: "Read and follow GROUNDWORK.md for all database work." },
+                { tool: "Windsurf", file: ".windsurfrules", line: "Read and follow GROUNDWORK.md for all database work." },
+                { tool: "Copilot", file: ".github/copilot-instructions.md", line: "Read and follow GROUNDWORK.md for all database work." },
+              ].map((hook) => (
+                <div key={hook.tool} className="rounded-lg p-3 flex items-center justify-between gap-4" style={{ background: "var(--bg-input)" }}>
+                  <div className="min-w-0">
+                    <span className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>{hook.tool}</span>
+                    <span className="text-xs mx-2" style={{ color: "var(--text-muted)" }}>→</span>
+                    <code className="text-xs" style={{ color: "#67e8f9" }}>{hook.file}</code>
+                  </div>
+                  <code className="text-xs shrink-0" style={{ color: "rgba(74, 222, 128, 0.8)" }}>{hook.line}</code>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {activeTab === "cursor" && (
+          <div className="flex items-start gap-3 mt-1">
+            <div className="w-5 h-5 rounded flex items-center justify-center shrink-0 mt-0.5" style={{ background: "rgba(74, 222, 128, 0.1)" }}>
+              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="rgba(74, 222, 128, 0.7)" strokeWidth="2.5">
+                <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
-            <div>
-              <p className="text-sm font-medium mb-0.5" style={{ color: "var(--text-primary)" }}>
-                Reference in your prompts or AI config
-              </p>
-              <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
-                Tell your AI: &quot;Read GROUNDWORK.md for database context before writing queries.&quot;
-              </p>
-            </div>
+            <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
+              Cursor reads .cursorrules automatically — zero config. Just save and go.
+            </p>
           </div>
         )}
 
         {activeTab === "copilot" && (
-          <div className="mt-3 rounded-lg p-3" style={{ background: "var(--bg-input)" }}>
-            <p className="text-xs font-mono" style={{ color: "var(--text-muted)" }}>
-              <span style={{ color: "var(--text-secondary)" }}>$</span> mkdir -p .github && mv ~/Downloads/copilot-instructions.md .github/
-            </p>
-          </div>
+          <>
+            <div className="flex items-start gap-3 mt-1">
+              <div className="w-5 h-5 rounded flex items-center justify-center shrink-0 mt-0.5" style={{ background: "rgba(74, 222, 128, 0.1)" }}>
+                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="rgba(74, 222, 128, 0.7)" strokeWidth="2.5">
+                  <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+              <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                Copilot reads this file automatically — zero config.
+              </p>
+            </div>
+            <div className="mt-3 rounded-lg p-3" style={{ background: "var(--bg-input)" }}>
+              <p className="text-xs font-mono" style={{ color: "var(--text-muted)" }}>
+                <span style={{ color: "var(--text-secondary)" }}>$</span> mkdir -p .github && mv ~/Downloads/copilot-instructions.md .github/
+              </p>
+            </div>
+          </>
         )}
       </div>
 

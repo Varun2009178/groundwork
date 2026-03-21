@@ -138,16 +138,7 @@ ${relationshipsMap}
 
 ---
 
-## AI Instructions
-
-When working with this database schema, follow these rules:
-
-1. Always use the exact table and column names defined above
-2. Always include proper foreign key references in queries
-3. Use the relationships defined above — do not infer new ones
-4. When creating new queries, follow these patterns:
-
-### Example Queries
+## Example Queries
 
 ${exampleQueries}
 
@@ -157,18 +148,16 @@ ${commonMistakes}
 
 ---
 
-## Common Patterns
+## Instructions
 
-- **Fetching with relations**: Always JOIN using the foreign keys defined in Relationships
-- **Inserting records**: Include all non-nullable columns; let defaults handle timestamps
-- **Filtering**: Use indexed columns (primary keys, foreign keys) for WHERE clauses
+This file is the source of truth for the database schema. You MUST follow these rules:
 
----
-
-## Rules
-- This file is the source of truth for database structure
-- Do not modify table names, column names, or types without updating this file
-- All queries should be consistent with the schema defined here
-- When in doubt, reference this file before writing any database code
+1. Use the exact table and column names defined in this file — do not guess or infer names
+2. Use the relationships defined above — do not invent new foreign keys or associations
+3. When JOINing tables, use the foreign keys listed in the Relationships section
+4. Include all non-nullable columns when inserting records; let defaults handle timestamps
+5. Use indexed columns (primary keys, foreign keys) in WHERE clauses for performance
+6. Check the Common Mistakes section before writing any query involving these tables
+7. If a column is marked nullable, handle NULL values explicitly (COALESCE, IS NULL checks, or conditional logic)
 `;
 }

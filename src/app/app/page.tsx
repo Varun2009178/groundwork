@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import StepSidebar from "@/components/StepSidebar";
 import SchemaInput from "@/components/SchemaInput";
 import SchemaReview from "@/components/SchemaReview";
@@ -10,12 +10,28 @@ import { Schema } from "@/lib/types";
 export default function AppPage() {
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
   const [userInput, setUserInput] = useState("");
+  const [apiKey, setApiKey] = useState("");
   const [parsedSchema, setParsedSchema] = useState<Schema | null>(null);
   const [generatedMarkdown, setGeneratedMarkdown] = useState("");
   const [cursorMarkdown, setCursorMarkdown] = useState("");
   const [copilotMarkdown, setCopilotMarkdown] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Persist API key in localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("groundwork_api_key");
+    if (saved) setApiKey(saved);
+  }, []);
+
+  const handleApiKeyChange = (key: string) => {
+    setApiKey(key);
+    if (key) {
+      localStorage.setItem("groundwork_api_key", key);
+    } else {
+      localStorage.removeItem("groundwork_api_key");
+    }
+  };
 
   const handleParseSchema = async () => {
     setIsLoading(true);
@@ -24,7 +40,7 @@ export default function AppPage() {
       const res = await fetch("/api/parse-schema", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ input: userInput }),
+        body: JSON.stringify({ input: userInput, apiKey: apiKey || undefined }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -92,6 +108,8 @@ export default function AppPage() {
             onSubmit={handleParseSchema}
             isLoading={isLoading}
             error={error}
+            apiKey={apiKey}
+            onApiKeyChange={handleApiKeyChange}
           />
         )}
         {currentStep === 2 && parsedSchema && (

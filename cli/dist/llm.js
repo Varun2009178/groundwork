@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getKeyInfo = getKeyInfo;
 exports.callLLM = callLLM;
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
 const SYSTEM_PROMPT = `You are a database schema parser. Given a plain English description of a database, extract the structured schema as JSON.
@@ -47,7 +48,6 @@ Rules:
 - If the description is vague, make reasonable assumptions and include them
 - Table and column names should be snake_case
 - Do not include any text outside the JSON object`;
-const OPENROUTER_MODEL = "anthropic/claude-sonnet-4";
 function extractJSON(text) {
     const fenceMatch = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
     if (fenceMatch)
@@ -57,18 +57,17 @@ function extractJSON(text) {
         return braceMatch[0];
     return text.trim();
 }
-async function callViaOpenRouter(input) {
-    const apiKey = process.env.OPENROUTER_API_KEY;
-    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+// OpenAI-compatible chat completions (works for OpenRouter, OpenAI, Gemini)
+async function callViaOpenAICompat(input, apiKey, baseUrl, model, extraHeaders) {
+    const res = await fetch(`${baseUrl}/chat/completions`, {
         method: "POST",
         headers: {
             Authorization: `Bearer ${apiKey}`,
             "Content-Type": "application/json",
-            "HTTP-Referer": "https://groundwork.dev",
-            "X-Title": "Groundwork CLI",
+            ...extraHeaders,
         },
         body: JSON.stringify({
-            model: OPENROUTER_MODEL,
+            model,
             max_tokens: 2000,
             messages: [
                 { role: "system", content: SYSTEM_PROMPT },
@@ -78,13 +77,14 @@ async function callViaOpenRouter(input) {
     });
     if (!res.ok) {
         const err = await res.text();
-        throw new Error(`OpenRouter error (${res.status}): ${err}`);
+        // Sanitize error: strip anything that looks like an API key
+        const sanitized = err.replace(/sk-[a-zA-Z0-9_-]{10,}/g, "sk-***").replace(/AIza[a-zA-Z0-9_-]{10,}/g, "AIza***");
+        throw new Error(`API error (${res.status}): ${sanitized.slice(0, 200)}`);
     }
     const data = (await res.json());
     return data.choices[0].message.content;
 }
-async function callViaAnthropic(input) {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+async function callViaAnthropic(input, apiKey) {
     const client = new sdk_1.default({ apiKey });
     const response = await client.messages.create({
         model: "claude-sonnet-4-20250514",
@@ -98,16 +98,57 @@ async function callViaAnthropic(input) {
     }
     return textBlock.text;
 }
+// Detect provider from key prefix and route accordingly
+function detectProvider(apiKey) {
+    if (apiKey.startsWith("sk-or-")) {
+        return {
+            name: "OpenRouter",
+            call: (input) => callViaOpenAICompat(input, apiKey, "https://openrouter.ai/api/v1", "anthropic/claude-sonnet-4", {
+                "HTTP-Referer": "https://groundwork.dev",
+                "X-Title": "Groundwork CLI",
+            }),
+        };
+    }
+    if (apiKey.startsWith("sk-ant-")) {
+        return { name: "Anthropic", call: (input) => callViaAnthropic(input, apiKey) };
+    }
+    if (apiKey.startsWith("sk-")) {
+        return {
+            name: "OpenAI",
+            call: (input) => callViaOpenAICompat(input, apiKey, "https://api.openai.com/v1", "gpt-4o"),
+        };
+    }
+    if (apiKey.startsWith("AIza")) {
+        return {
+            name: "Gemini",
+            call: (input) => callViaOpenAICompat(input, apiKey, "https://generativelanguage.googleapis.com/v1beta/openai", "gemini-2.0-flash"),
+        };
+    }
+    // Default: try as Anthropic key
+    return { name: "Anthropic", call: (input) => callViaAnthropic(input, apiKey) };
+}
+function maskKey(key) {
+    if (key.length <= 8)
+        return "****";
+    return key.slice(0, 4) + "···" + key.slice(-4);
+}
+function getKeyInfo() {
+    const key = process.env.OPENROUTER_API_KEY
+        || process.env.ANTHROPIC_API_KEY
+        || process.env.OPENAI_API_KEY
+        || process.env.GEMINI_API_KEY;
+    if (!key)
+        return null;
+    const provider = detectProvider(key);
+    return { key, provider: provider.name, masked: maskKey(key) };
+}
 async function callLLM(input) {
-    let raw;
-    if (process.env.OPENROUTER_API_KEY) {
-        raw = await callViaOpenRouter(input);
+    const info = getKeyInfo();
+    if (!info) {
+        throw new Error("Missing API key. Set one of these in your environment or .env.local:\n" +
+            "  OPENROUTER_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, or GEMINI_API_KEY");
     }
-    else if (process.env.ANTHROPIC_API_KEY) {
-        raw = await callViaAnthropic(input);
-    }
-    else {
-        throw new Error("Missing API key. Set OPENROUTER_API_KEY or ANTHROPIC_API_KEY in your environment.");
-    }
+    const provider = detectProvider(info.key);
+    const raw = await provider.call(input);
     return extractJSON(raw);
 }

@@ -46,21 +46,23 @@ Rules:
 - Table and column names should be snake_case
 - Do not include any text outside the JSON object`;
 
-const OPENROUTER_MODEL = "anthropic/claude-sonnet-4";
-
-async function callViaOpenRouter(input: string): Promise<string> {
-  const apiKey = process.env.OPENROUTER_API_KEY!;
-
-  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+// OpenAI-compatible chat completions (works for OpenRouter, OpenAI, Gemini)
+async function callViaOpenAICompat(
+  input: string,
+  apiKey: string,
+  baseUrl: string,
+  model: string,
+  extraHeaders?: Record<string, string>
+): Promise<string> {
+  const res = await fetch(`${baseUrl}/chat/completions`, {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${apiKey}`,
       "Content-Type": "application/json",
-      "HTTP-Referer": "https://groundwork.dev",
-      "X-Title": "Groundwork",
+      ...extraHeaders,
     },
     body: JSON.stringify({
-      model: OPENROUTER_MODEL,
+      model,
       max_tokens: 2000,
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
@@ -71,15 +73,16 @@ async function callViaOpenRouter(input: string): Promise<string> {
 
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`OpenRouter error (${res.status}): ${err}`);
+    // Sanitize: strip anything that looks like an API key from error output
+    const sanitized = err.replace(/sk-[a-zA-Z0-9_-]{10,}/g, "sk-***").replace(/AIza[a-zA-Z0-9_-]{10,}/g, "AIza***");
+    throw new Error(`API error (${res.status}): ${sanitized.slice(0, 200)}`);
   }
 
   const data = await res.json();
   return data.choices[0].message.content;
 }
 
-async function callViaAnthropic(input: string): Promise<string> {
-  const apiKey = process.env.ANTHROPIC_API_KEY!;
+async function callViaAnthropic(input: string, apiKey: string): Promise<string> {
   const client = new Anthropic({ apiKey });
   const response = await client.messages.create({
     model: "claude-sonnet-4-20250514",
@@ -96,31 +99,61 @@ async function callViaAnthropic(input: string): Promise<string> {
 }
 
 function extractJSON(text: string): string {
-  // Strip markdown code fences (```json ... ``` or ``` ... ```)
   const fenceMatch = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
   if (fenceMatch) return fenceMatch[1].trim();
-  // Try to find raw JSON object
   const braceMatch = text.match(/\{[\s\S]*\}/);
   if (braceMatch) return braceMatch[0];
   return text.trim();
 }
 
-async function callLLM(input: string): Promise<string> {
-  let raw: string;
-  if (process.env.OPENROUTER_API_KEY) {
-    raw = await callViaOpenRouter(input);
-  } else if (process.env.ANTHROPIC_API_KEY) {
-    raw = await callViaAnthropic(input);
-  } else {
-    throw new Error("Set OPENROUTER_API_KEY or ANTHROPIC_API_KEY in .env.local");
+// Detect provider from key prefix and route accordingly
+function detectProvider(apiKey: string): { call: (input: string) => Promise<string> } {
+  if (apiKey.startsWith("sk-or-")) {
+    return {
+      call: (input) => callViaOpenAICompat(input, apiKey, "https://openrouter.ai/api/v1", "anthropic/claude-sonnet-4", {
+        "HTTP-Referer": "https://groundwork.dev",
+        "X-Title": "Groundwork",
+      }),
+    };
   }
+  if (apiKey.startsWith("sk-ant-")) {
+    return { call: (input) => callViaAnthropic(input, apiKey) };
+  }
+  if (apiKey.startsWith("sk-")) {
+    return {
+      call: (input) => callViaOpenAICompat(input, apiKey, "https://api.openai.com/v1", "gpt-4o"),
+    };
+  }
+  if (apiKey.startsWith("AIza")) {
+    return {
+      call: (input) => callViaOpenAICompat(input, apiKey, "https://generativelanguage.googleapis.com/v1beta/openai", "gemini-2.0-flash"),
+    };
+  }
+  // Default: try as Anthropic key
+  return { call: (input) => callViaAnthropic(input, apiKey) };
+}
+
+async function callLLM(input: string, clientKey?: string): Promise<string> {
+  // Client-provided key takes precedence
+  const key = clientKey
+    || process.env.OPENROUTER_API_KEY
+    || process.env.ANTHROPIC_API_KEY
+    || process.env.OPENAI_API_KEY
+    || process.env.GEMINI_API_KEY;
+
+  if (!key) {
+    throw new Error("No API key provided. Add your API key in the field above, or set one in .env.local.");
+  }
+
+  const provider = detectProvider(key);
+  const raw = await provider.call(input);
   return extractJSON(raw);
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { input } = body;
+    const { input, apiKey: clientKey } = body;
 
     if (!input || typeof input !== "string" || input.trim().length < 10) {
       return NextResponse.json(
@@ -136,27 +169,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Call LLM, retry once on invalid JSON
     let rawJson: string;
     try {
-      rawJson = await callLLM(input);
+      rawJson = await callLLM(input, clientKey);
     } catch (err: unknown) {
-      if (err instanceof Error && err.message.includes("Set OPENROUTER_API_KEY or ANTHROPIC_API_KEY")) {
-        return NextResponse.json({ error: err.message }, { status: 500 });
-      }
-      return NextResponse.json(
-        { error: "Something went wrong — please try again." },
-        { status: 500 }
-      );
+      const message = err instanceof Error ? err.message : "Something went wrong — please try again.";
+      return NextResponse.json({ error: message }, { status: 500 });
     }
 
     let parsed: unknown;
     try {
       parsed = JSON.parse(rawJson);
     } catch {
-      // Retry once with same prompt
       try {
-        rawJson = await callLLM(input);
+        rawJson = await callLLM(input, clientKey);
         parsed = JSON.parse(rawJson);
       } catch {
         return NextResponse.json(
@@ -166,7 +192,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Validate with Zod
     const validated = claudeResponseSchema.safeParse(parsed);
     if (!validated.success) {
       return NextResponse.json(
@@ -175,7 +200,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Build full Schema object with id and timestamp
     const schema: Schema = {
       id: crypto.randomUUID(),
       ...validated.data,
