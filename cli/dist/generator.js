@@ -51,6 +51,10 @@ function buildRelationshipsMap(schema) {
     };
     const lines = schema.relationships.map((r) => {
         const sym = typeSymbol[r.type] || "──";
+        // For one-to-many, swap from/to so "one" side comes first (from = FK holder = many side)
+        if (r.type === "one-to-many") {
+            return `  ${r.to} ${sym} ${r.from} (${r.foreignKey})`;
+        }
         return `  ${r.from} ${sym} ${r.to} (${r.foreignKey})`;
     });
     return `## Relationships Map\n\n\`\`\`\n${lines.join("\n")}\n\`\`\``;
@@ -84,7 +88,13 @@ function buildCommonMistakes(schema) {
 function generateContext(schema) {
     const tableSections = schema.tables.map((t) => buildTableSection(t)).join("\n\n");
     const relationships = schema.relationships
-        .map((r) => `- **${r.from} → ${r.to}**: ${r.type} via \`${r.from}.${r.foreignKey}\` — ${r.description}`)
+        .map((r) => {
+        // For one-to-many, display as "to → from" (one side → many side), but via still references FK holder
+        if (r.type === "one-to-many") {
+            return `- **${r.to} → ${r.from}**: ${r.type} via \`${r.from}.${r.foreignKey}\` — ${r.description}`;
+        }
+        return `- **${r.from} → ${r.to}**: ${r.type} via \`${r.from}.${r.foreignKey}\` — ${r.description}`;
+    })
         .join("\n");
     const relationshipsMap = buildRelationshipsMap(schema);
     const commonMistakes = buildCommonMistakes(schema);
