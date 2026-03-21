@@ -205,7 +205,7 @@ program
   .version(VERSION);
 
 program
-  .command("init")
+  .command("init", { isDefault: true })
   .description("Interactively describe your schema and generate GROUNDWORK.md")
   .option("-o, --output <file>", "Output filename", "GROUNDWORK.md")
   .action(initCommand);
