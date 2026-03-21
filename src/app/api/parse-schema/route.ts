@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { claudeResponseSchema } from "@/lib/schema-validator";
 import { Schema } from "@/lib/types";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 const SYSTEM_PROMPT = `You are a database schema parser. Given a plain English description of a database, extract the structured schema as JSON.
 
@@ -167,6 +168,19 @@ export async function POST(request: NextRequest) {
         { error: "Schema description is too long. Please keep it under 5000 characters." },
         { status: 400 }
       );
+    }
+
+    // Rate limit: only applies when using server-side key (no client key)
+    if (!clientKey) {
+      const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+      const rateLimit = await checkRateLimit(ip);
+
+      if (!rateLimit.allowed) {
+        return NextResponse.json(
+          { error: "You've used your 10 free generations today. Add your own API key to continue, or come back tomorrow." },
+          { status: 429 }
+        );
+      }
     }
 
     let rawJson: string;
