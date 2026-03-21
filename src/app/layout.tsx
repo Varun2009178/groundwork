@@ -11,8 +11,18 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Groundwork",
-  description: "Define your database schema once. Get consistent AI context forever.",
+  title: "Groundwork — Give your AI the full picture",
+  description: "Turn plain English into structured database context files that AI tools actually understand.",
+  openGraph: {
+    title: "Groundwork — Give your AI the full picture",
+    description: "Turn plain English into structured database context files that AI tools actually understand.",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Groundwork — Give your AI the full picture",
+    description: "Turn plain English into structured database context files that AI tools actually understand.",
+  },
 };
 
 export default function RootLayout({
