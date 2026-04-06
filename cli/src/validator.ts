@@ -6,7 +6,7 @@ const VALID_COLUMN_TYPES = ["string", "integer", "timestamp", "boolean", "text",
 const columnSchema = z.object({
   name: z.string(),
   type: z.string().transform((val): ColumnType => {
-    if (VALID_COLUMN_TYPES.includes(val as any)) return val as ColumnType;
+    if ((VALID_COLUMN_TYPES as readonly string[]).includes(val)) return val as ColumnType;
     return "string";
   }),
   primaryKey: z.boolean().optional(),

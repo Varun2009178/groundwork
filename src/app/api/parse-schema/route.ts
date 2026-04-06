@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { claudeResponseSchema } from "@/lib/schema-validator";
 import { Schema } from "@/lib/types";
-import { checkRateLimit } from "@/lib/rate-limit";
 
 const SYSTEM_PROMPT = `You are a database schema parser. Given a plain English description of a database, extract the structured schema as JSON.
 
@@ -134,19 +133,8 @@ function detectProvider(apiKey: string): { call: (input: string) => Promise<stri
   return { call: (input) => callViaAnthropic(input, apiKey) };
 }
 
-async function callLLM(input: string, clientKey?: string): Promise<string> {
-  // Client-provided key takes precedence
-  const key = clientKey
-    || process.env.OPENROUTER_API_KEY
-    || process.env.ANTHROPIC_API_KEY
-    || process.env.OPENAI_API_KEY
-    || process.env.GEMINI_API_KEY;
-
-  if (!key) {
-    throw new Error("No API key provided. Add your API key in the field above, or set one in .env.local.");
-  }
-
-  const provider = detectProvider(key);
+async function callLLM(input: string, clientKey: string): Promise<string> {
+  const provider = detectProvider(clientKey);
   const raw = await provider.call(input);
   return extractJSON(raw);
 }
@@ -170,17 +158,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Rate limit: only applies when using server-side key (no client key)
-    if (!clientKey) {
-      const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-      const rateLimit = await checkRateLimit(ip);
-
-      if (!rateLimit.allowed) {
-        return NextResponse.json(
-          { error: "You've used your 10 free generations today. Add your own API key to continue, or come back tomorrow." },
-          { status: 429 }
-        );
-      }
+    if (!clientKey || typeof clientKey !== "string") {
+      return NextResponse.json(
+        { error: "API key is required. Add your OpenRouter, Anthropic, OpenAI, or Gemini key above." },
+        { status: 401 }
+      );
     }
 
     let rawJson: string;

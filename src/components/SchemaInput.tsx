@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useCallback, useState } from "react";
+import { useRef, useCallback } from "react";
 
 interface SchemaInputProps {
   value: string;
@@ -32,7 +32,6 @@ const EXAMPLES = [
 
 export default function SchemaInput({ value, onChange, onSubmit, isLoading, error, apiKey, onApiKeyChange }: SchemaInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [showKey, setShowKey] = useState(false);
 
   const handleInput = useCallback(() => {
     const textarea = textareaRef.current;
@@ -72,52 +71,40 @@ export default function SchemaInput({ value, onChange, onSubmit, isLoading, erro
 
       {/* API Key */}
       <div className="w-full max-w-2xl mb-5">
-        <button
-          onClick={() => setShowKey(!showKey)}
-          className="text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors duration-150"
+        <label className="text-xs font-medium flex items-center gap-1.5 mb-2"
           style={{ color: apiKey ? "rgba(74, 222, 128, 0.7)" : "var(--text-muted)" }}
         >
           <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          {apiKey ? "API key saved" : "Add your API key"}
-          <svg
-            className={`w-3 h-3 transition-transform duration-150 ${showKey ? "rotate-180" : ""}`}
-            viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-          >
-            <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
-        {showKey && (
-          <div className="mt-3 flex gap-2 items-center">
-            <input
-              type="password"
-              value={apiKey}
-              onChange={(e) => onApiKeyChange(e.target.value)}
-              placeholder="OpenRouter, Anthropic, OpenAI, or Gemini key"
-              className="flex-1 rounded-lg px-4 py-2.5 text-sm focus:outline-none"
-              style={{
-                background: "var(--bg-input)",
-                border: "1px solid var(--border-color)",
-                color: "var(--text-primary)",
-              }}
-            />
-            {apiKey && (
-              <button
-                onClick={() => onApiKeyChange("")}
-                className="text-xs px-3 py-2.5 rounded-lg cursor-pointer transition-colors duration-150"
-                style={{ color: "var(--text-muted)", border: "1px solid var(--border-color)" }}
-              >
-                Clear
-              </button>
-            )}
-          </div>
-        )}
-        {showKey && (
-          <p className="text-xs mt-2" style={{ color: "var(--text-muted)" }}>
-            Supports OpenRouter, Anthropic, OpenAI, and Gemini. Stored in your browser only — never saved on our server.
-          </p>
-        )}
+          API Key {!apiKey && <span style={{ color: "rgba(248, 113, 113, 0.8)" }}>(required)</span>}
+        </label>
+        <div className="flex gap-2 items-center">
+          <input
+            type="password"
+            value={apiKey}
+            onChange={(e) => onApiKeyChange(e.target.value)}
+            placeholder="OpenRouter, Anthropic, OpenAI, or Gemini key"
+            className="flex-1 rounded-lg px-4 py-2.5 text-sm focus:outline-none"
+            style={{
+              background: "var(--bg-input)",
+              border: `1px solid ${!apiKey ? "rgba(248, 113, 113, 0.3)" : "var(--border-color)"}`,
+              color: "var(--text-primary)",
+            }}
+          />
+          {apiKey && (
+            <button
+              onClick={() => onApiKeyChange("")}
+              className="text-xs px-3 py-2.5 rounded-lg cursor-pointer transition-colors duration-150"
+              style={{ color: "var(--text-muted)", border: "1px solid var(--border-color)" }}
+            >
+              Clear
+            </button>
+          )}
+        </div>
+        <p className="text-xs mt-2" style={{ color: "var(--text-muted)" }}>
+          Supports OpenRouter, Anthropic, OpenAI, and Gemini. Stored in your browser only — never saved on our server.
+        </p>
       </div>
 
       {/* Textarea */}
@@ -148,7 +135,7 @@ export default function SchemaInput({ value, onChange, onSubmit, isLoading, erro
         <div className="mt-5 flex justify-end">
           <button
             onClick={onSubmit}
-            disabled={isLoading || value.trim().length < 10}
+            disabled={isLoading || value.trim().length < 10 || !apiKey}
             className="px-8 py-3 rounded-lg text-sm font-semibold disabled:opacity-30 transition-all duration-200 flex items-center gap-2.5 cursor-pointer disabled:cursor-not-allowed"
             style={{ background: "var(--button-bg)", color: "var(--button-text)" }}
           >

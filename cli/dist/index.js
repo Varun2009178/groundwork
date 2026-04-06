@@ -43,6 +43,8 @@ const llm_1 = require("./llm");
 const validator_1 = require("./validator");
 const generator_1 = require("./generator");
 const check_1 = require("./check");
+const schema_finder_1 = require("./schema-finder");
+const watcher_1 = require("./watcher");
 const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "package.json"), "utf-8"));
 const VERSION = pkg.version;
 // Load .env.local / .env from the current directory (so users don't need to export manually)
@@ -237,5 +239,55 @@ program
     console.log(`\n  ${passes} passed · ${warns} warnings · ${fails} errors\n`);
     if (fails > 0)
         process.exit(1);
+});
+program
+    .command("watch")
+    .description("Watch schema.prisma and auto-regenerate GROUNDWORK.md on changes")
+    .option("-s, --schema <path>", "Path to schema.prisma")
+    .option("-o, --output <file>", "Output filename", "GROUNDWORK.md")
+    .action((options) => {
+    const schemaPath = (0, schema_finder_1.findPrismaSchema)(options.schema);
+    if (!schemaPath) {
+        console.error("\n✗ Could not find schema.prisma.");
+        console.error("  Searched: ./prisma/schema.prisma, ./schema.prisma");
+        console.error("  Use --schema <path> to specify the location.\n");
+        process.exit(1);
+    }
+    const outputPath = path.resolve(process.cwd(), options.output || "GROUNDWORK.md");
+    const watcher = (0, watcher_1.startWatcher)({ schemaPath, outputPath });
+    // Graceful shutdown on Ctrl+C
+    process.on("SIGINT", async () => {
+        console.log("\nStopping watcher...");
+        await watcher.close();
+        process.exit(0);
+    });
+    process.on("SIGTERM", async () => {
+        await watcher.close();
+        process.exit(0);
+    });
+});
+program
+    .command("sync")
+    .description("One-shot: parse schema.prisma and regenerate GROUNDWORK.md")
+    .option("-s, --schema <path>", "Path to schema.prisma")
+    .option("-o, --output <file>", "Output filename", "GROUNDWORK.md")
+    .action((options) => {
+    const schemaPath = (0, schema_finder_1.findPrismaSchema)(options.schema);
+    if (!schemaPath) {
+        console.error("\n✗ Could not find schema.prisma.");
+        console.error("  Searched: ./prisma/schema.prisma, ./schema.prisma");
+        console.error("  Use --schema <path> to specify the location.\n");
+        process.exit(1);
+    }
+    const outputPath = path.resolve(process.cwd(), options.output || "GROUNDWORK.md");
+    try {
+        const summary = (0, watcher_1.syncSchema)(schemaPath, outputPath);
+        const relativeOutput = (0, schema_finder_1.displayPath)(outputPath);
+        console.log(`\n✓ ${relativeOutput} synced (${summary})\n`);
+    }
+    catch (err) {
+        console.error(`\n✗ Parse error: ${err instanceof Error ? err.message : err}\n`);
+        process.exit(1);
+    }
 });
 program.parse();

@@ -84,7 +84,6 @@ function buildCommonMistakes(schema: Schema): string {
   }
 
   // Warn about common naming confusion
-  const tableNames = schema.tables.map((t) => t.name);
   for (const table of schema.tables) {
     const fkCols = table.columns.filter((c) => c.references);
     for (const fk of fkCols) {

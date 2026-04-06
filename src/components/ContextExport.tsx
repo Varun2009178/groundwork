@@ -96,7 +96,7 @@ export default function ContextExport({
     setSaveError("");
     try {
       // File System Access API — lets user pick their project folder
-      const dirHandle = await (window as any).showDirectoryPicker({ mode: "readwrite" });
+      const dirHandle = await (window as unknown as { showDirectoryPicker: (opts: { mode: string }) => Promise<FileSystemDirectoryHandle> }).showDirectoryPicker({ mode: "readwrite" });
 
       // For copilot, we need to create .github subfolder
       let targetDir = dirHandle;
@@ -116,8 +116,8 @@ export default function ContextExport({
 
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-    } catch (err: any) {
-      if (err?.name === "AbortError") return; // user cancelled picker
+    } catch (err: unknown) {
+      if (err instanceof DOMException && err.name === "AbortError") return; // user cancelled picker
       // Browser doesn't support File System Access API — fall back to download
       handleDownload();
     }

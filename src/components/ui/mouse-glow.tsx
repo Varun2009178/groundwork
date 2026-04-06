@@ -1,17 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { motion, useSpring } from "framer-motion";
 
+const emptySubscribe = () => () => {};
+
 export function MouseGlow() {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
 
   const mouseX = useSpring(0, { damping: 25, stiffness: 80 });
   const mouseY = useSpring(0, { damping: 25, stiffness: 80 });
 
   useEffect(() => {
-    setMounted(true);
-
     const handleMouseMove = (e: MouseEvent) => {
       mouseX.set(e.clientX);
       mouseY.set(e.clientY + window.scrollY);
