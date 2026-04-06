@@ -20,26 +20,58 @@ You could paste your schema every time. But you'd forget the nullable columns, t
 
 ## Quick Start
 
+### Option 1: From a Prisma schema (no API key needed)
+
+If you already have a `schema.prisma` file, Groundwork can parse it directly — no AI, no API key, instant:
+
 ```bash
+npx groundwork-cli sync
+```
+
+This reads your `schema.prisma` and generates `GROUNDWORK.md` in your project root.
+
+To keep it in sync automatically as you (or your AI) edit the schema:
+
+```bash
+npx groundwork-cli watch
+```
+
+### Option 2: From plain English (requires API key)
+
+Don't have a Prisma schema? Describe your database in plain English and Groundwork will generate the context file using AI:
+
+```bash
+export ANTHROPIC_API_KEY=your-key
 npx groundwork-cli
 ```
 
-That's it. Describe your schema, get a `GROUNDWORK.md`.
-
-Or use the [web app](https://groundwork.dev) for a visual experience with schema review cards and multiple export formats.
+Or use the [web app](https://groundwork.dev) for a visual experience with schema review cards.
 
 ---
 
 ## Commands
 
 ```bash
-groundwork init          # Generate GROUNDWORK.md from plain English
-groundwork check         # Validate your schema for common issues
+groundwork init          # Describe schema in plain English → GROUNDWORK.md (needs API key)
+groundwork sync          # Parse schema.prisma → GROUNDWORK.md (no API key, instant)
+groundwork watch         # Like sync, but re-generates on every save (keeps running)
+groundwork check         # Validate your GROUNDWORK.md for common issues
 ```
+
+### When to use each command
+
+| Command | Use when... | Needs API key? |
+|---------|------------|----------------|
+| `groundwork init` | You don't have a Prisma schema and want to describe your DB in plain English | Yes |
+| `groundwork sync` | You have a `schema.prisma` and want a one-time generation | No |
+| `groundwork watch` | You want GROUNDWORK.md to stay in sync as you or your AI edit `schema.prisma` | No |
+| `groundwork check` | You want to validate an existing GROUNDWORK.md for issues | No |
+
+---
 
 ### `groundwork init`
 
-Interactive schema input. Describe your database in plain English, press Enter twice, and get a `GROUNDWORK.md` in your current directory.
+Interactive schema input. Describe your database in plain English, press Enter twice, and get a `GROUNDWORK.md` in your current directory. Requires an API key from [Anthropic](https://console.anthropic.com/), [OpenRouter](https://openrouter.ai/), [OpenAI](https://platform.openai.com/), or [Google AI](https://aistudio.google.com/).
 
 ```bash
 $ npx groundwork-cli
@@ -53,6 +85,48 @@ Describe your database schema in plain English.
 ✓ Parsed 3 tables, 3 relationships
 ✓ Written to GROUNDWORK.md
   87 lines, 3,240 chars
+```
+
+### `groundwork sync`
+
+Reads your `schema.prisma` file and generates `GROUNDWORK.md` in one shot. No API key needed — parsing is entirely deterministic.
+
+```bash
+$ npx groundwork-cli sync
+
+✓ GROUNDWORK.md synced (3 tables, 3 relationships)
+```
+
+Groundwork auto-detects your schema at `./prisma/schema.prisma` or `./schema.prisma`. To specify a custom path:
+
+```bash
+groundwork sync --schema ./db/schema.prisma --output ./docs/GROUNDWORK.md
+```
+
+### `groundwork watch`
+
+Like `sync`, but stays running and regenerates `GROUNDWORK.md` every time `schema.prisma` is saved. Run this alongside your dev server. When you (or your AI) add a table, rename a column, or change a relationship, GROUNDWORK.md updates within 300ms.
+
+```bash
+$ npx groundwork-cli watch
+
+✓ GROUNDWORK.md generated (3 tables, 3 relationships)
+
+Watching prisma/schema.prisma → GROUNDWORK.md
+
+  Press Ctrl+C to stop.
+
+[14:23:01] GROUNDWORK.md updated (4 tables, 3 relationships)
+[14:25:12] GROUNDWORK.md updated (4 tables, 5 relationships)
+```
+
+If the schema has a syntax error mid-edit, the watcher logs the error but keeps the last valid GROUNDWORK.md — it never writes a broken file.
+
+Options:
+
+```bash
+groundwork watch --schema ./db/schema.prisma    # Custom schema path
+groundwork watch --output ./docs/GROUNDWORK.md   # Custom output path
 ```
 
 ### `groundwork check`
@@ -71,6 +145,80 @@ Checking GROUNDWORK.md...
 
   1 passed · 3 warnings · 0 errors
 ```
+
+---
+
+## Making Your AI Use GROUNDWORK.md
+
+Generating the file is only half the job. You need to tell your AI tool to read it. Here's how for each tool:
+
+### Claude Code
+
+Add one line to your `CLAUDE.md` (create it in your project root if it doesn't exist):
+
+```
+@GROUNDWORK.md
+```
+
+That's it. Claude Code will load GROUNDWORK.md into every conversation automatically.
+
+### Cursor
+
+Add GROUNDWORK.md to your project-level context. Two options:
+
+**Option A: Project rules (recommended)**
+
+1. Open Cursor Settings > Rules
+2. Add a project rule with this content:
+
+```
+Read and follow GROUNDWORK.md for all database work. Use the exact table names, column names, and relationships defined there. Do not guess or invent schema elements.
+```
+
+**Option B: .cursorrules file**
+
+Create `.cursorrules` in your project root:
+
+```
+Read and follow GROUNDWORK.md for all database work. Use the exact table names, column names, and relationships defined there. Do not guess or invent schema elements.
+```
+
+### Windsurf
+
+Create `.windsurfrules` in your project root:
+
+```
+Read and follow GROUNDWORK.md for all database work. Use the exact table names, column names, and relationships defined there. Do not guess or invent schema elements.
+```
+
+### GitHub Copilot
+
+Create `.github/copilot-instructions.md` in your project:
+
+```
+Read and follow GROUNDWORK.md for all database work. Use the exact table names, column names, and relationships defined there. Do not guess or invent schema elements.
+```
+
+### Any other AI tool
+
+If your tool supports custom instructions or context files, point it at `GROUNDWORK.md`. The file is self-contained markdown — any tool that reads it will understand the schema.
+
+---
+
+## Recommended Workflow
+
+**For Prisma projects (most common):**
+
+1. Install: `npm install -g groundwork-cli` (or use `npx`)
+2. Run the watcher: `groundwork watch`
+3. Set up your AI tool (see above)
+4. Work normally — every time schema.prisma changes, GROUNDWORK.md updates automatically
+
+**For non-Prisma projects:**
+
+1. Run `groundwork init` once to generate GROUNDWORK.md from plain English
+2. Set up your AI tool (see above)
+3. Re-run `groundwork init` when your schema changes significantly
 
 ---
 
@@ -151,21 +299,35 @@ Smart trimming progressively removes sections (patterns → mistakes → example
 
 ## Setup
 
-**Requirements:** Node.js 18+ and an API key from [Anthropic](https://console.anthropic.com/) or [OpenRouter](https://openrouter.ai/).
+**Requirements:** Node.js 18+
+
+For `sync` and `watch` commands: no API key needed.
+
+For `init` command: an API key from [Anthropic](https://console.anthropic.com/), [OpenRouter](https://openrouter.ai/), [OpenAI](https://platform.openai.com/), or [Google AI](https://aistudio.google.com/).
 
 ```bash
-# CLI
+# Install globally
+npm install -g groundwork-cli
+
+# Or use npx (no install)
+npx groundwork-cli sync
+npx groundwork-cli watch
+
+# For init command, set an API key first
 export ANTHROPIC_API_KEY=your-key
 npx groundwork-cli
-
-# Web app (development)
-git clone https://github.com/Varun2009178/groundwork.git
-cd groundwork
-cp .env.example .env.local
-# Add your API key to .env.local
-npm install
-npm run dev
 ```
+
+Supported API key environment variables (auto-detected):
+
+```bash
+OPENROUTER_API_KEY    # OpenRouter (any model)
+ANTHROPIC_API_KEY     # Anthropic (Claude)
+OPENAI_API_KEY        # OpenAI (GPT-4o)
+GEMINI_API_KEY        # Google (Gemini)
+```
+
+You can also put these in a `.env.local` or `.env` file in your project root.
 
 ---
 
@@ -193,9 +355,12 @@ src/
 
 cli/
   src/
-    index.ts                    # CLI entry point (init + check commands)
+    index.ts                    # CLI entry point (init, check, watch, sync)
     llm.ts                      # Claude API calls
     generator.ts                # GROUNDWORK.md builder
+    prisma-parser.ts            # Prisma schema → Schema type parser
+    watcher.ts                  # File watcher (chokidar)
+    schema-finder.ts            # Auto-detect schema.prisma location
     check.ts                    # Schema validation logic
     validator.ts                # Zod validation
     types.ts                    # Schema types
@@ -213,6 +378,8 @@ cli/
 | AI | Claude API via `@anthropic-ai/sdk` |
 | Validation | Zod v4 |
 | CLI | Commander.js |
+| Prisma Parsing | `@mrleebo/prisma-ast` |
+| File Watching | chokidar |
 | Animations | Framer Motion |
 
 ---
