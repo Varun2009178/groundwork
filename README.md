@@ -2,50 +2,31 @@
 
 **Your AI is guessing your database. Groundwork makes it know.**
 
-[![CI](https://github.com/Varun2009178/groundwork/actions/workflows/ci.yml/badge.svg)](https://github.com/Varun2009178/groundwork/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/groundwork-cli)](https://www.npmjs.com/package/groundwork-cli)
 [![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-> Persistent AI context files for your database schema. Drop it into your AI coding sessions and never explain your schema again.
-
----
-
-## The Problem
-
-Every time you start a new AI coding session, your AI has no idea what your database looks like. It guesses column names, invents tables that don't exist, and writes queries that break silently.
-
-You could paste your schema every time. But you'd forget the nullable columns, the exact foreign key names, and the edge cases. Groundwork generates a persistent context file that covers all of it — table definitions, example queries with your actual column names, common mistake warnings, and relationship maps. Drop it in your project once and every AI session gets it right.
+> Persistent AI context files for your Prisma schema. One command generates `GROUNDWORK.md` — table definitions, example queries, relationship maps, and mistake warnings. Drop it into your project and every AI session gets your database right.
 
 ---
 
 ## Quick Start
 
-### Option 1: From a Prisma schema (no API key needed)
-
-If you already have a `schema.prisma` file, Groundwork can parse it directly — no AI, no API key, instant:
-
-```bash
-npx groundwork-cli sync
-```
-
-This reads your `schema.prisma` and generates `GROUNDWORK.md` in your project root.
-
-To keep it in sync automatically as you (or your AI) edit the schema:
+Groundwork reads your `schema.prisma` and generates a context file. No API key needed.
 
 ```bash
 npx groundwork-cli watch
 ```
 
-### Option 2: From plain English (requires API key)
+That's it. `GROUNDWORK.md` is generated in your project root and stays in sync every time you (or your AI) save `schema.prisma`.
 
-Don't have a Prisma schema? Describe your database in plain English and Groundwork will generate the context file using AI:
+### Don't have a Prisma schema?
+
+You can describe your database in plain English instead (requires an API key):
 
 ```bash
 export ANTHROPIC_API_KEY=your-key
-npx groundwork-cli
+npx groundwork-cli init
 ```
-
-Or use the [web app](https://groundwork.dev) for a visual experience with schema review cards.
 
 ---
 
@@ -207,18 +188,12 @@ If your tool supports custom instructions or context files, point it at `GROUNDW
 
 ## Recommended Workflow
 
-**For Prisma projects (most common):**
+1. Run `npx groundwork-cli sync` to generate `GROUNDWORK.md` from your Prisma schema
+2. Set up your AI tool to read it (see above)
+3. Run `npx groundwork-cli watch` alongside your dev server to auto-sync on schema changes
+4. Work normally — GROUNDWORK.md stays up to date automatically
 
-1. Install: `npm install -g groundwork-cli` (or use `npx`)
-2. Run the watcher: `groundwork watch`
-3. Set up your AI tool (see above)
-4. Work normally — every time schema.prisma changes, GROUNDWORK.md updates automatically
-
-**For non-Prisma projects:**
-
-1. Run `groundwork init` once to generate GROUNDWORK.md from plain English
-2. Set up your AI tool (see above)
-3. Re-run `groundwork init` when your schema changes significantly
+> **No Prisma?** Use `groundwork init` to describe your schema in plain English instead (requires an API key).
 
 ---
 
@@ -280,20 +255,6 @@ WHERE t.id = ?;
 ```
 
 See [`examples/GROUNDWORK.md`](examples/GROUNDWORK.md) for a complete example.
-
----
-
-## Export Formats
-
-The web app generates three variants:
-
-| Format | File | Limit |
-|--------|------|-------|
-| Full | `GROUNDWORK.md` | No limit |
-| Cursor | `.cursorrules` | 6,000 chars |
-| Copilot | `copilot-instructions.md` | 4,000 chars |
-
-Smart trimming progressively removes sections (patterns → mistakes → examples → constraints) to fit within each tool's context limit while preserving core schema info.
 
 ---
 
